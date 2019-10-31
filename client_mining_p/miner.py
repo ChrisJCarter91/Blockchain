@@ -3,6 +3,7 @@ import requests
 
 import sys
 import json
+import time
 
 
 def proof_of_work(block):
@@ -13,7 +14,11 @@ def proof_of_work(block):
     in an effort to find a number that is a valid proof
     :return: A valid proof for the provided block
     """
-    pass
+    block_string = json.dumps(block, sort_keys=True).encode()
+    proof = 0
+    while not valid_proof(block_string, proof):
+        proof += 1
+    return proof
 
 
 def valid_proof(block_string, proof):
@@ -27,7 +32,10 @@ def valid_proof(block_string, proof):
     correct number of leading zeroes.
     :return: True if the resulting hash is a valid proof, False otherwise
     """
-    pass
+    guess = f'{block_string}{proof}'.encode()
+    guess_hashed = hashlib.sha256(guess).hexdigest()
+
+    return guess_hashed[:6] == "000000"
 
 
 if __name__ == '__main__':
@@ -38,9 +46,11 @@ if __name__ == '__main__':
         node = "http://localhost:5000"
 
     # Load ID
-    f = open("my_id.txt", "r")
-    id = f.read()
-    print("ID is", id)
+    f = open("carter_dev.txt", "r")
+    id = f.readline()
+    coins = f.readline()
+    print("The ID is", id)
+    print("coins is", coins)
     f.close()
 
     # Run forever until interrupted
@@ -55,8 +65,21 @@ if __name__ == '__main__':
             print(r)
             break
 
+        print("")
+        print("Last Block: ")
+        print(data["last_block"])
+        print("")
+
+        print("Finding Proof...")
+        print("")
+        start_time = time.time()
+
         # TODO: Get the block from `data` and use it to look for a new proof
-        # new_proof = ???
+        new_proof = proof_of_work(data["last_block"])
+
+        end_time = time.time()
+        print(f"PROOF FOUND IN {end_time - start_time} seconds")
+        print("")
 
         # When found, POST it to the server {"proof": new_proof, "id": id}
         post_data = {"proof": new_proof, "id": id}
@@ -67,4 +90,13 @@ if __name__ == '__main__':
         # TODO: If the server responds with a 'message' 'New Block Forged'
         # add 1 to the number of coins mined and print it.  Otherwise,
         # print the message from the server.
-        pass
+        if data['message'] == "New Block Forged":
+            coins = int(coins) +1
+            f = open("carter_dev.txt", "w")
+            f.write(id)
+            f.write(str(coins))
+            f.close()
+            print(f"You currently have {coins} coins!")
+            print("")
+        else:
+            print(data['message'])
