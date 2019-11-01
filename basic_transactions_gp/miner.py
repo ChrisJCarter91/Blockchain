@@ -3,6 +3,7 @@ import requests
 
 import sys
 import json
+
 import time
 
 
@@ -32,10 +33,10 @@ def valid_proof(block_string, proof):
     correct number of leading zeroes.
     :return: True if the resulting hash is a valid proof, False otherwise
     """
-    guess = f'{block_string}{proof}'.encode()
+    guess = f"{block_string}{proof}".encode()
     guess_hashed = hashlib.sha256(guess).hexdigest()
 
-    return guess_hashed[:6] == "000000"
+    return guess_hashed[:3] == "000"
 
 
 if __name__ == '__main__':
@@ -47,11 +48,9 @@ if __name__ == '__main__':
 
     # Load ID
     f = open("carter_dev.txt", "r")
-    id = f.read()
-    print("The ID is", id)
+    id = f.readline()
+    print("ID is", id)
     f.close()
-
-    coins = 0
 
     # Run forever until interrupted
     while True:
@@ -66,11 +65,11 @@ if __name__ == '__main__':
             break
 
         print("")
-        print("Last Block: ")
+        print("LAST BLOCK:")
         print(data["last_block"])
         print("")
 
-        print("Finding Proof...")
+        print("Finding proof...")
         print("")
         start_time = time.time()
 
@@ -78,7 +77,7 @@ if __name__ == '__main__':
         new_proof = proof_of_work(data["last_block"])
 
         end_time = time.time()
-        print(f"PROOF FOUND IN {end_time - start_time} seconds")
+        print(f"PROOF FOUND in {end_time - start_time} seconds")
         print("")
 
         # When found, POST it to the server {"proof": new_proof, "id": id}
@@ -91,8 +90,7 @@ if __name__ == '__main__':
         # add 1 to the number of coins mined and print it.  Otherwise,
         # print the message from the server.
         if data['message'] == "New Block Forged":
-            coins += 1
-            print("You've successfully mined a coin!")
-            print(f"Number of coins: {coins}")
+            print(f"You have succesfully forged a new block and received a coin!")
+            print("")
         else:
             print(data['message'])
